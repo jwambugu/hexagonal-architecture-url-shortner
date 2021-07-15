@@ -38,7 +38,7 @@ func chooseRepo(repo string) shortener.RedirectRepository {
 }
 
 func main() {
-	repo := chooseRepo("mongo")
+	repo := chooseRepo("redis")
 	service := shortener.NewRedirectService(repo)
 	handler := api.NewHandler(service)
 
