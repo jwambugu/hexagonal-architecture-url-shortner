@@ -5,6 +5,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jwambugu/hexagonal-architecture-url-shortener/api"
+	"github.com/jwambugu/hexagonal-architecture-url-shortener/config"
 	mongoRepo "github.com/jwambugu/hexagonal-architecture-url-shortener/repository/mongodb"
 	redisRepo "github.com/jwambugu/hexagonal-architecture-url-shortener/repository/redis"
 	"github.com/jwambugu/hexagonal-architecture-url-shortener/shortener"
@@ -20,12 +21,20 @@ func chooseRepo() shortener.RedirectRepository {
 	case "redis":
 		url := os.Getenv("REDIS_URL")
 
-		repository, err := redisRepo.NewRedisRepository(url)
+		client, err := config.NewRedisConfig(url).RedisClient()
 
 		if err != nil {
 			log.Fatal(err)
 		}
-		return repository
+
+		repo := redisRepo.NewRedisRepository(client)
+		redirectRepository, err := repo.RedirectRepository()
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		return redirectRepository
 	case "mongo":
 		url := os.Getenv("MONGO_URL")
 		database := os.Getenv("MONGO_DB")

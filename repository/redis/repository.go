@@ -13,6 +13,14 @@ type redisRepository struct {
 	client *redis.Client
 }
 
+// NewRedisRepository initializes a new repo
+func NewRedisRepository(c *redis.Client) *redisRepository {
+	return &redisRepository{
+		client: c,
+	}
+}
+
+// generateKey returns a key to be used when storing a new Redirect
 func (r *redisRepository) generateKey(code string) string {
 	return fmt.Sprintf("redirect:%s", code)
 }
@@ -67,36 +75,7 @@ func (r *redisRepository) Store(redirect *shortener.Redirect) error {
 	return nil
 }
 
-// newRedisClient returns a client to connect to the db instance
-func newRedisClient(url string) (*redis.Client, error) {
-	opts, err := redis.ParseURL(url)
-
-	if err != nil {
-		return nil, err
-	}
-
-	client := redis.NewClient(opts)
-	ctx := context.Background()
-
-	_, err = client.Ping(ctx).Result()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
-}
-
-// NewRedisRepository returns an interface to interact with the DB
-func NewRedisRepository(url string) (shortener.RedirectRepository, error) {
-	repo := &redisRepository{}
-
-	client, err := newRedisClient(url)
-
-	if err != nil {
-		return nil, errs.Wrap(err, "repository.NewRedisRepository")
-	}
-
-	repo.client = client
-	return repo, nil
+// RedirectRepository returns an interface to interact with the DB
+func (r *redisRepository) RedirectRepository() (shortener.RedirectRepository, error) {
+	return r, nil
 }
