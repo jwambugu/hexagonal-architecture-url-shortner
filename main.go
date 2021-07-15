@@ -15,18 +15,22 @@ import (
 	"syscall"
 )
 
-func chooseRepo(repo string) shortener.RedirectRepository {
-	switch repo {
+func chooseRepo() shortener.RedirectRepository {
+	switch os.Getenv("MS_REPOSITORY") {
 	case "redis":
-		repository, err := redisRepo.NewRedisRepository("redis://localhost:6379")
+		url := os.Getenv("REDIS_URL")
+
+		repository, err := redisRepo.NewRedisRepository(url)
 
 		if err != nil {
 			log.Fatal(err)
 		}
 		return repository
 	case "mongo":
-		url := ""
-		repository, err := mongoRepo.NewMongoRepository(url, "redirects", 30)
+		url := os.Getenv("MONGO_URL")
+		database := os.Getenv("MONGO_DB")
+
+		repository, err := mongoRepo.NewMongoRepository(url, database, 30)
 
 		if err != nil {
 			log.Fatal(err)
@@ -38,7 +42,11 @@ func chooseRepo(repo string) shortener.RedirectRepository {
 }
 
 func main() {
-	repo := chooseRepo("redis")
+	repo := chooseRepo()
+
+	if repo == nil {
+		log.Fatal("Invalid repository provided.")
+	}
 	service := shortener.NewRedirectService(repo)
 	handler := api.NewHandler(service)
 
